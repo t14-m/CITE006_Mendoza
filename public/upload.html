@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Your File</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #fff5f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .upload-box {
+            background: #ffffff;
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            width: 360px;
+        }
+
+        h1 {
+            font-size: 22px;
+            color: #e75480;
+            margin-bottom: 20px;
+        }
+
+        .drop-area {
+            border: 2px dashed #f8a1b5;
+            border-radius: 12px;
+            padding: 30px 20px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .drop-area:hover {
+            background: #fff0f4;
+            border-color: #e75480;
+        }
+
+        .drop-area img {
+            width: 60px;
+            margin-bottom: 10px;
+        }
+
+        .drop-area div {
+            color: #444;
+            font-size: 14px;
+        }
+
+        .file-chosen {
+            font-size: 13px;
+            color: #e75480;
+            margin-top: 8px;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        button {
+            background: #e75480;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: background 0.2s ease;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #d0436f;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="upload-box">
+        <h1>Upload your files</h1>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <label for="file" class="drop-area" id="drop-area">
+                <img src="https://img.icons8.com/fluency/96/folder-invoices.png" alt="upload icon">
+                <div>Drag & drop files here or click to choose</div>
+            </label>
+            <input type="file" id="file" name="file" required>
+            <div id="file-chosen" class="file-chosen">No file chosen 😿</div>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file');
+        const dropArea = document.getElementById('drop-area');
+        const fileChosen = document.getElementById('file-chosen');
+
+        // Clicking the drop area opens file picker
+        dropArea.addEventListener('click', () => fileInput.click());
+
+        // Update file name when chosen
+        fileInput.addEventListener('change', () => {
+            fileChosen.textContent = fileInput.files.length > 0
+                ? `📂 ${fileInput.files[0].name}`
+                : "No file chosen 😿";
+        });
+
+        // Drag & drop functionality
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.style.background = '#fff0f4';
+            dropArea.style.borderColor = '#e75480';
+        });
+
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.style.background = '';
+            dropArea.style.borderColor = '#f8a1b5';
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                fileChosen.textContent = `📂 ${e.dataTransfer.files[0].name}`;
+            } else {
+                fileChosen.textContent = "No file chosen 😿";
+            }
+            dropArea.style.background = '';
+            dropArea.style.borderColor = '#f8a1b5';
+        });
+    </script>
+</body>
+
+</html>
