@@ -9,10 +9,12 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "��#\u0000 \u0000C\u0000I\u0000T\u0000E\u00000\u00000\u00006\u0000_\u0000M\u0000e\u0000n\u0000d\u0000o\u0000z\u0000a\u0000\r\u0000 \u0000#\u0000 \u0000N\u0000e\u0000w\u0000_\u0000R\u0000e\u0000p\u0000o\u0000\r\u0000 \u0000",
   "dependencies": {
+    "express": "^5.1.0",
     "formidable": "^3.5.4",
     "mime": "^4.0.7",
-    "mime-types": "^3.0.1"
+    "mime-types": "^3.0.1",
+    "multer": "^2.0.2"
   }
 }

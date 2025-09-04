@@ -2,13 +2,130 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Node.js File Server</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>File Uploader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #fff0f2;
+            /* pale pink background */
+            color: #333;
+        }
+
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(213, 92, 116, 0.2);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        h1 {
+            color: #d55c74;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        form {
+            margin-top: 1rem;
+        }
+
+        .file-drop-area {
+            border: 2px dashed #d55c74;
+            border-radius: 10px;
+            padding: 2rem;
+            cursor: pointer;
+            color: #444;
+            font-size: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            user-select: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .file-drop-area:hover {
+            background-color: #ffe6eb;
+        }
+
+        .folder-icon {
+            font-size: 3rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        #selectedFileName {
+            margin-top: 8px;
+            color: #d55c74;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        button {
+            background-color: #d55c74;
+            color: white;
+            border: none;
+            padding: 12px 0;
+            border-radius: 10px;
+            width: 100%;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #b04a5e;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Welcome to the Node.js File Server</h1>
+    <div class="container">
+        <h1>Upload your file</h1>
+        <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+            <label for="fileInput" class="file-drop-area" tabindex="0">
+                <div class="folder-icon">📁</div>
+                Drag & drop files here or click to choose
+            </label>
+            <input type="file" name="uploadedFile" id="fileInput" required />
+            <div id="selectedFileName"></div>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const selectedFileName = document.getElementById('selectedFileName');
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                selectedFileName.textContent = "📁 " + fileInput.files[0].name;
+            } else {
+                selectedFileName.textContent = "";
+            }
+        });
+
+        // Optional: allow keyboard to open file dialog from label
+        document.querySelector('.file-drop-area').addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                fileInput.click();
+            }
+        });
+    </script>
 </body>
 
 </html>

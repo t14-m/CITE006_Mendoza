@@ -1,131 +1,101 @@
-const http = require('http');
-const fs = require('fs');
+// Import necessary modules
+const express = require('express');
 const path = require('path');
-const mime = require('mime-types');
-const formidable = require('formidable');
+const multer = require('multer');
+const fs = require('fs');
 
-const server = http.createServer((req, res) => {
-    if (req.url === '/upload' && req.method.toLowerCase() === 'get') {
-        // Serve the upload page
-        const uploadPage = path.join(__dirname, 'public', 'upload.html');
-        fs.readFile(uploadPage, (err, content) => {
-            if (err) {
-                res.writeHead(500, { 'Content-Type': 'text/plain' });
-                res.end('Error loading upload page.');
-            } else {
-                res.writeHead(200, { 'Content-Type': 'text/html' });
-                res.end(content, 'utf8');
-            }
-        });
+// Create the Express application
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Create the 'public' and 'uploads' directories if they don't exist
+const publicDir = path.join(__dirname, 'public');
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+
+if (!fs.existsSync(publicDir)) {
+    fs.mkdirSync(publicDir);
+}
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir);
+}
+
+// Configure multer storage
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        // Specify the directory where uploaded files will be stored
+        cb(null, uploadsDir);
+    },
+    filename: (req, file, cb) => {
+        // Use the original filename with a timestamp to prevent duplicates
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + '-' + file.originalname);
     }
-    else if (req.url === '/upload' && req.method.toLowerCase() === 'post') {
-        // Handle file upload
-        const form = formidable({
-            multiples: false,
-            uploadDir: path.join(__dirname, 'uploads'),
-            keepExtensions: true
-        });
+});
 
-        form.parse(req, (err, fields, files) => {
-            if (err) {
-                res.writeHead(500, { 'Content-Type': 'text/plain' });
-                return res.end('Error uploading file.');
-            }
+// Define a file filter function to validate file types
+const fileFilter = (req, file, cb) => {
+    // Allowed file types based on the HTML description
+    const allowedMimeTypes = [
+        'image/png',
+        'image/jpeg',
+        'image/gif',
+        'application/pdf',
+        'application/msword', // .doc
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' // .docx
+    ];
 
-            const file = files.file;
-            if (!file) {
-                res.writeHead(400, { 'Content-Type': 'text/plain' });
-                return res.end('No file uploaded.');
-            }
-
-            const allowedTypes = ['.png', '.jpg', '.jpeg', '.txt', '.pdf'];
-            const ext = path.extname(file.originalFilename).toLowerCase();
-
-            if (!allowedTypes.includes(ext)) {
-                fs.unlinkSync(file.filepath);
-                res.writeHead(400, { 'Content-Type': 'text/plain' });
-                return res.end('Invalid file type.');
-            }
-
-            const newPath = path.join(__dirname, 'uploads', file.originalFilename);
-
-            try {
-                fs.renameSync(file.filepath, newPath);
-            } catch (moveErr) {
-                res.writeHead(500, { 'Content-Type': 'text/plain' });
-                return res.end('Error saving file.');
-            }
-
-            // Success response with cute UI
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(`
-                <html>
-                <head>
-                  <style>
-                    body { 
-                        font-family: 'Segoe UI', sans-serif; 
-                        background: #fdf6f9; 
-                        display: flex; 
-                        height: 100vh; 
-                        justify-content: center; 
-                        align-items: center; 
-                        margin: 0;
-                    }
-                    .msg-box {
-                        background: white;
-                        padding: 20px 30px;
-                        border-radius: 16px;
-                        box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-                        text-align: center;
-                    }
-                    h2 {
-                        color: #e75480;
-                    }
-                    a {
-                        display: inline-block;
-                        margin-top: 15px;
-                        padding: 10px 18px;
-                        background: #e75480;
-                        color: white;
-                        text-decoration: none;
-                        border-radius: 8px;
-                        transition: background 0.2s ease;
-                    }
-                    a:hover {
-                        background: #d0436f;
-                    }
-                  </style>
-                </head>
-                <body>
-                  <div class="msg-box">
-                    <h2>✅ File uploaded successfully!</h2>
-                    <a href="/upload">Upload another file</a>
-                  </div>
-                </body>
-                </html>
-            `);
-        });
+    // Check if the uploaded file's MIME type is in the allowed list
+    if (allowedMimeTypes.includes(file.mimetype)) {
+        cb(null, true); // Accept the file
+    } else {
+        // Reject the file and provide a helpful error message
+        cb(new Error('Invalid file type. Only PNG, JPG, GIF, PDF, DOC, and DOCX are allowed.'), false);
     }
-    else {
-        // Serve static files from /public
-        let filePath = path.join(__dirname, 'public', req.url === '/' ? 'index.html' : req.url);
+};
 
-        fs.readFile(filePath, (err, content) => {
-            if (err) {
-                if (err.code === 'ENOENT') {
-                    res.writeHead(404, { 'Content-Type': 'text/html' });
-                    res.end('<h1>404 - File Not Found</h1>', 'utf8');
-                } else {
-                    res.writeHead(500);
-                    res.end(`Server Error: ${err.code}`);
-                }
-            } else {
-                res.writeHead(200, { 'Content-Type': mime.lookup(filePath) });
-                res.end(content, 'utf8');
-            }
+// Configure the multer middleware with the storage and file filter
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB file size limit
+    }
+});
+
+// Serve static files from the 'public' directory
+app.use(express.static(publicDir));
+
+// Handle the file upload POST request
+// The 'upload.single()' middleware will handle parsing the file.
+// If an error occurs (e.g., from the fileFilter), it will pass it to the error handler below.
+app.post('/upload', upload.single('uploadedFile'), (req, res) => {
+    // This part of the code will only run if the upload was successful
+    if (req.file) {
+        console.log(`File uploaded successfully: ${req.file.path}`);
+        res.status(200).send({
+            message: 'File uploaded successfully!',
+            filename: req.file.filename
+        });
+    } else {
+        // This handles the case where the form is submitted without a file
+        res.status(400).send({
+            message: 'No file was uploaded.'
         });
     }
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// --- THIS IS THE FIX ---
+// Add a dedicated error-handling middleware.
+// This function will execute if any middleware before it (like multer) calls next(error).
+app.use((error, req, res, next) => {
+    // Log the error for debugging purposes
+    console.error(error);
+    // Send a user-friendly error message
+    res.status(400).send({ message: error.message });
+});
+
+
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server is running at http://localhost:${PORT}`);
+});
